@@ -1,0 +1,1395 @@
+ <!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>نظام إدارة حسابات المتجر</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #121212;
+            --bg-card: #1e1e1e;
+            --primary: #0d47a1;
+            --primary-light: #1565c0;
+            --accent: #29b6f6;
+            --text-main: #ffffff;
+            --text-muted: #b0bec5;
+            --success: #4caf50;
+            --danger: #f44336;
+            --warning: #ff9800;
+            --info: #00bcd4;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Tajawal', sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background-color: var(--primary);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .app-title { font-size: 1.2rem; font-weight: bold; display: flex; align-items: center; gap: 10px; }
+
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            padding-bottom: 90px;
+        }
+
+        .section { display: none; }
+        .section.active { display: block; }
+
+        .balance-card {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(13, 71, 161, 0.4);
+        }
+        .balance-card.usd { background: linear-gradient(135deg, #0d47a1, #1976d2); }
+        .balance-label { color: rgba(255,255,255,0.85); font-size: 0.9rem; margin-bottom: 5px; }
+        .balance-amount { font-size: 2.2rem; font-weight: bold; }
+        .currency-symbol { font-size: 1.1rem; vertical-align: super; }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(95px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .menu-item {
+            background-color: var(--bg-card);
+            padding: 15px 10px;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 1px solid transparent;
+        }
+        .menu-item:hover { border-color: var(--accent); transform: translateY(-2px); }
+        .menu-item.settlement { border-color: var(--success); }
+        .menu-icon { font-size: 1.8rem; margin-bottom: 8px; display: block; }
+        .menu-label { font-size: 0.85rem; color: var(--text-muted); }
+
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 0.9rem; }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            background-color: #2c2c2c;
+            border: 1px solid #444;
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+        }
+        input:focus, select:focus { border-color: var(--accent); }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.95rem;
+        }
+        .btn-primary { width: 100%; background-color: var(--accent); color: #000; }
+        .btn-primary:hover { background-color: #039be5; }
+        .btn-danger { background-color: var(--danger); color: white; }
+        .btn-warning { background-color: var(--warning); color: #000; }
+        .btn-success { background-color: var(--success); color: white; }
+        .btn-info { background-color: var(--info); color: #000; }
+        .btn-outline { background: transparent; border: 1px solid var(--accent); color: var(--accent); }
+        .btn-small { padding: 6px 12px; font-size: 0.85rem; border-radius: 5px; margin: 2px; }
+        .btn-group { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+
+        .data-list { display: flex; flex-direction: column; gap: 10px; }
+        .data-item {
+            background-color: var(--bg-card);
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .data-info h4 { margin-bottom: 5px; font-size: 1.05rem; }
+        .data-info p { color: var(--text-muted); font-size: 0.85rem; }
+        .amount.positive { color: var(--success); font-weight: bold; }
+        .amount.negative { color: var(--danger); font-weight: bold; }
+
+        .action-buttons { display: flex; gap: 5px; flex-wrap: wrap; }
+        
+        .currency-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        .currency-badge.SYP { background: #1b5e20; color: #c8e6c9; }
+        .currency-badge.USD { background: #0d47a1; color: #bbdefb; }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--bg-card);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            border-top: 1px solid #333;
+            z-index: 100;
+        }
+        .nav-item {
+            text-align: center;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 5px;
+        }
+        .nav-item.active { color: var(--accent); }
+        .nav-icon { font-size: 1.4rem; display: block; margin-bottom: 2px; }
+
+        #toast {
+            visibility: hidden;
+            min-width: 280px;
+            background-color: #2e7d32;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 14px 20px;
+            position: fixed;
+            z-index: 1000;
+            left: 50%;
+            bottom: 90px;
+            transform: translateX(-50%);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            font-weight: 500;
+        }
+        #toast.show { visibility: visible; animation: slideIn 0.3s, fadeOut 0.3s 2.7s; }
+        #toast.error { background-color: #c62828; }
+        @keyframes slideIn { from { bottom: 60px; opacity: 0; } to { bottom: 90px; opacity: 1; } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+        @media print {
+            body { background: white !important; color: black !important; }
+            header, .bottom-nav, .menu-grid, .form-group button, 
+            .action-buttons, .balance-card:not(.print-balance),
+            #acc-currency, .btn-print, .export-buttons,
+            #date-from, #date-to {
+                display: none !important;
+            }
+            .section { display: none !important; }
+            #account.section.active { display: block !important; }
+            #account {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                padding: 20px !important;
+                background: white !important;
+                color: black !important;
+            }
+            .print-header {
+                display: block !important;
+                text-align: center !important;
+                margin-bottom: 25px !important;
+                border-bottom: 3px solid #000 !important;
+                padding-bottom: 15px !important;
+            }
+            .print-header h2 { font-size: 1.5rem !important; margin-bottom: 10px !important; color: #000 !important; }
+            .print-header p { margin: 5px 0 !important; color: #333 !important; font-size: 1rem !important; }
+            .balance-card.print-balance {
+                display: block !important;
+                background: #f5f5f5 !important;
+                border: 2px solid #000 !important;
+                color: black !important;
+                padding: 15px !important;
+                margin: 15px 0 !important;
+            }
+            .balance-card.print-balance * { color: black !important; }
+            .data-item {
+                border: 1px solid #ccc !important;
+                break-inside: avoid !important;
+                background: white !important;
+                color: black !important;
+                padding: 12px !important;
+                margin: 5px 0 !important;
+            }
+            .data-info h4, .data-info p { color: black !important; }
+            .amount.positive { color: #2e7d32 !important; }
+            .amount.negative { color: #c62828 !important; }
+            button { display: none !important; }
+            h2#acc-title { color: black !important; font-size: 1.4rem !important; margin-bottom: 20px !important; }
+            #account button[onclick*="dashboard"] { display: none !important; }
+        }
+        
+        .print-header { display: none; }
+
+        .export-buttons { display: flex; gap: 10px; margin: 15px 0; flex-wrap: wrap; }
+        .export-buttons button { flex: 1; min-width: 120px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+        .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+        .empty-state .icon { font-size: 3rem; margin-bottom: 15px; display: block; }
+
+        .balance-display {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+        .balance-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #333;
+        }
+        .balance-row:last-child { border-bottom: none; }
+
+        .settlement-info {
+            background: rgba(46, 125, 50, 0.2);
+            border: 1px solid var(--success);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+
+        .transaction-type-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-right: 5px;
+        }
+        .transaction-type-badge.settlement {
+            background: var(--success);
+            color: white;
+        }
+        .transaction-type-badge.normal {
+            background: var(--text-muted);
+            color: black;
+        }
+
+        @media (max-width: 480px) {
+            .menu-grid { grid-template-columns: repeat(4, 1fr); }
+            .data-item { flex-direction: column; align-items: flex-start; }
+            .action-buttons { width: 100%; justify-content: flex-end; }
+            header { padding: 12px 15px; }
+            .balance-amount { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="app-title">💰 إدارة المتجر</div>
+    <button style="background:rgba(255,255,255,0.2);padding:6px 12px;border-radius:20px;border:none;color:white;cursor:pointer;" onclick="app.toggleGlobalView()">
+        عرض: <span id="global-view-label">SYP</span>
+    </button>
+</header>
+
+<main>
+    <section id="dashboard" class="section active">
+        <div class="balance-card">
+            <div class="balance-label">🇸🇾 رصيد الصندوق (الليرة السورية)</div>
+            <div class="balance-amount" id="balance-syp">0</div>
+            <div class="currency-symbol">ل.س</div>
+        </div>
+        <div class="balance-card usd">
+            <div class="balance-label">🇺🇸 رصيد الصندوق (الدولار الأمريكي)</div>
+            <div class="balance-amount" id="balance-usd">0.00</div>
+            <div class="currency-symbol">$</div>
+        </div>
+
+        <div class="menu-grid">
+            <div class="menu-item" onclick="app.nav('transactions')"><span class="menu-icon">💸</span><span class="menu-label">الصندوق</span></div>
+            <div class="menu-item" onclick="app.nav('customers')"><span class="menu-icon">👥</span><span class="menu-label">العملاء</span></div>
+            <div class="menu-item" onclick="app.nav('suppliers')"><span class="menu-icon">🏭</span><span class="menu-label">الموردين</span></div>
+            <div class="menu-item settlement" onclick="app.nav('settlement')"><span class="menu-icon">💳</span><span class="menu-label">تسديد الذمم</span></div>
+            <div class="menu-item" onclick="app.nav('sales')"><span class="menu-icon">🛒</span><span class="menu-label">مبيعات</span></div>
+            <div class="menu-item" onclick="app.nav('purchases')"><span class="menu-label">مشتريات</span><span class="menu-icon">🛍️</span></div>
+            <div class="menu-item" onclick="app.nav('expenses')"><span class="menu-icon">📉</span><span class="menu-label">مصاريف</span></div>
+            <div class="menu-item" onclick="app.nav('reports')"><span class="menu-icon">📊</span><span class="menu-label">التقارير</span></div>
+            <div class="menu-item" onclick="app.nav('settings')"><span class="menu-icon">⚙️</span><span class="menu-label">إعدادات</span></div>
+        </div>
+
+        <h3 style="margin:20px 0 15px;">آخر العمليات</h3>
+        <div id="recent-list" class="data-list"></div>
+    </section>
+
+    <section id="settlement" class="section">
+        <h2>💳 تسديد الذمم</h2>
+        <p style="color:var(--text-muted);margin:10px 0;">تسديد ديون العملاء أو الموردين من الصندوق فقط - مع تطابق العملة</p>
+        
+        <div class="form-group" style="background:var(--bg-card);padding:15px;border-radius:10px;margin:15px 0;">
+            <label>نوع التسديد</label>
+            <div style="display:flex;gap:10px;margin-top:8px;">
+                <button id="btn-settle-customer" class="btn-info" style="flex:1;" onclick="app.setSettlementType('customer')">👥 تسديد عميل</button>
+                <button id="btn-settle-supplier" class="btn-warning" style="flex:1;" onclick="app.setSettlementType('supplier')">🏭 تسديد مورد</button>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>اختر العميل/المورد</label>
+            <select id="settle-party" onchange="app.showSettlementBalances()"></select>
+        </div>
+
+        <div id="settlement-balances" class="balance-display" style="display:none;">
+            <h4 style="margin-bottom:10px;">الأرصدة المستحقة:</h4>
+            <div class="balance-row">
+                <span>🇸🇾 الليرة السورية:</span>
+                <span id="balance-syp-debt" class="amount">0 ل.س</span>
+            </div>
+            <div class="balance-row">
+                <span>🇺🇸 الدولار الأمريكي:</span>
+                <span id="balance-usd-debt" class="amount">0.00 $</span>
+            </div>
+        </div>
+
+        <div class="settlement-info" id="settlement-info" style="display:none;">
+            <p style="font-size:0.9rem;">⚠️ <strong>قاعدة تطابق العملة:</strong></p>
+            <p style="font-size:0.85rem;margin-top:5px;">
+                • الدين بالليرة السورية → السداد يجب أن يكون بالليرة السورية<br>
+                • الدين بالدولار الأمريكي → السداد يجب أن يكون بالدولار الأمريكي
+            </p>
+            <p style="font-size:0.85rem;margin-top:10px;color:var(--success);">
+                ✅ سيتم خصم المبلغ من حساب العميل/المورد<br>
+                ✅ سيتم إضافة/خصم المبلغ من الصندوق
+            </p>
+        </div>
+
+        <div class="form-group">
+            <label>عملة التسديد</label>
+            <select id="settle-currency" onchange="app.updateSettlementForm()">
+                <option value="">-- اختر العملة --</option>
+                <option value="SYP">🇸🇾 ليرة سورية (SYP)</option>
+                <option value="USD">🇺🇸 دولار أمريكي (USD)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>مبلغ التسديد</label>
+            <input type="number" id="settle-amount" placeholder="0.00" step="0.01">
+            <p id="max-settle-amount" style="font-size:0.8rem;color:var(--text-muted);margin-top:5px;"></p>
+        </div>
+
+        <div class="form-group">
+            <label>الوصف</label>
+            <input type="text" id="settle-desc" placeholder="مثال: تسديد دفعة من الدين">
+        </div>
+
+        <div class="form-group">
+            <label>التاريخ</label>
+            <input type="date" id="settle-date">
+        </div>
+
+        <div class="btn-group">
+            <button class="btn-success" onclick="app.saveSettlement()">✅ تأكيد التسديد</button>
+            <button class="btn-outline" onclick="app.nav('dashboard')">❌ إلغاء</button>
+        </div>
+    </section>
+
+    <section id="entities" class="section">
+        <h2 id="entity-title">العملاء</h2>
+        <div style="background:var(--bg-card);padding:15px;border-radius:10px;margin:15px 0;">
+            <h3 style="margin-bottom:10px;">➕ إضافة جديد</h3>
+            <div style="display:flex;gap:10px;">
+                <input type="text" id="entity-name" placeholder="اسم العميل/المورد" style="flex:1;">
+                <button class="btn-primary" style="width:auto;margin:0;" onclick="app.addEntity()">حفظ</button>
+            </div>
+        </div>
+        <div id="entities-list" class="data-list"></div>
+    </section>
+
+    <section id="trans-form" class="section">
+        <h2 id="form-title">عملية جديدة</h2>
+        
+        <div style="background:var(--bg-card);padding:15px;border-radius:10px;margin:15px 0;">
+            <label>نوع العملية</label>
+            <div style="display:flex;gap:10px;margin-top:8px;">
+                <button id="btn-in" class="btn-success" style="flex:1;" onclick="app.setTransType('in')">✅ إيداع / دخل</button>
+                <button id="btn-out" class="btn-danger" style="flex:1;display:none;" onclick="app.setTransType('out')">❌ سحب / مصروف</button>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>الطرف الآخر</label>
+            <select id="t-party"></select>
+        </div>
+        <div class="form-group">
+            <label>المبلغ</label>
+            <input type="number" id="t-amount" placeholder="0.00" step="0.01">
+        </div>
+        <div class="form-group">
+            <label>العملة</label>
+            <select id="t-currency">
+                <option value="SYP">🇸🇾 ليرة سورية (SYP)</option>
+                <option value="USD">🇺🇸 دولار أمريكي (USD)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>الوصف</label>
+            <input type="text" id="t-desc" placeholder="شرح العملية">
+        </div>
+        <div class="form-group">
+            <label>التاريخ</label>
+            <input type="date" id="t-date">
+        </div>
+        
+        <div class="btn-group">
+            <button class="btn-primary" onclick="app.saveTrans()">💾 حفظ</button>
+            <button class="btn-outline" onclick="app.cancelTrans()">❌ إلغاء</button>
+        </div>
+    </section>
+
+    <section id="account" class="section">
+        <button onclick="app.nav('dashboard')" style="background:none;border:none;color:var(--accent);cursor:pointer;margin-bottom:15px;font-size:1rem;">← العودة للرئيسية</button>
+        
+        <div class="print-header">
+            <h2 id="print-title">كشف حساب</h2>
+            <p><strong>العميل/المورد:</strong> <span id="print-entity"></span></p>
+            <p><strong>العملة:</strong> <span id="print-curr"></span></p>
+            <p><strong>الفترة:</strong> <span id="print-period"></span></p>
+            <p><strong>تاريخ الطباعة:</strong> <span id="print-date"></span></p>
+            <p style="margin-top:15px;font-weight:bold;font-size:1.1rem;">الرصيد النهائي: <span id="print-balance"></span></p>
+        </div>
+
+        <h2 id="acc-title">سجل الحساب</h2>
+        
+        <div style="background:var(--bg-card);padding:15px;border-radius:10px;margin:15px 0;">
+            <label>🔹 اختر العملة لعرض الكشف:</label>
+            <select id="acc-currency" onchange="app.renderAccount()" style="margin-top:8px;max-width:300px;">
+                <option value="SYP">🇸🇾 كشف الحساب بالليرة السورية فقط</option>
+                <option value="USD">🇺🇸 كشف الحساب بالدولار الأمريكي فقط</option>
+            </select>
+            <p style="font-size:0.8rem;color:var(--text-muted);margin-top:8px;">
+                ⚠️ كل عملة لها رصيد وكشف مستقل - لا يتم الدمج أو التحويل
+            </p>
+        </div>
+
+        <div class="form-group">
+            <label>تصفية بالتاريخ (اختياري)</label>
+            <div style="display:flex;gap:8px;">
+                <input type="date" id="date-from" style="flex:1;">
+                <input type="date" id="date-to" style="flex:1;">
+            </div>
+        </div>
+        <button class="btn-primary" style="background:var(--primary-light);margin-bottom:15px;" onclick="app.renderAccount()">🔍 تطبيق التصفية</button>
+
+        <div class="balance-card print-balance">
+            <div class="balance-label">الرصيد الحالي (<span id="bal-curr-label">SYP</span>)</div>
+            <div class="balance-amount" id="acc-balance">0.00</div>
+            <div class="currency-symbol" id="bal-curr-symbol">ل.س</div>
+        </div>
+
+        <div class="export-buttons">
+            <button class="btn-success" onclick="app.exportText()">📄 حفظ كنص</button>
+            <button class="btn-warning" onclick="app.exportCSV()">📋 تصدير CSV</button>
+        </div>
+
+        <div id="acc-list" class="data-list"></div>
+        
+        <button class="btn-primary btn-print" onclick="app.printStatement()" style="margin-top:20px;">🖨️ طباعة كشف الحساب</button>
+    </section>
+
+    <section id="reports" class="section">
+        <h2>📊 التقارير</h2>
+        <div class="menu-grid" style="margin-top:20px;">
+            <div class="menu-item" onclick="app.report('balances')">
+                <span class="menu-icon">🏦</span>
+                <span class="menu-label">الأرصدة المنفصلة</span>
+            </div>
+            <div class="menu-item" onclick="app.report('flow')">
+                <span class="menu-icon">📈</span>
+                <span class="menu-label">حركة الصندوق</span>
+            </div>
+            <div class="menu-item" onclick="app.report('debts')">
+                <span class="menu-icon">💳</span>
+                <span class="menu-label">الذمم المستحقة</span>
+            </div>
+        </div>
+        <div id="report-out" style="margin-top:20px;background:#000;padding:15px;border-radius:8px;font-family:monospace;white-space:pre-wrap;font-size:0.9rem;"></div>
+    </section>
+
+    <section id="settings" class="section">
+        <h2>⚙️ الإعدادات</h2>
+        
+        <div class="form-group" style="margin-top:20px;">
+            <label>سعر صرف الدولار (ل.س) - للعرض فقط</label>
+            <input type="number" id="ex-rate" value="14000">
+            <p style="font-size:0.8rem;color:var(--text-muted);margin-top:5px;">
+                * هذا السعر للعرض التقديري فقط، لا يؤثر على الأرصدة المنفصلة
+            </p>
+        </div>
+        <button class="btn-primary" onclick="app.saveSettings()">💾 حفظ الإعدادات</button>
+
+        <hr style="border-color:#333;margin:25px 0;">
+
+        <h3>💾 النسخ الاحتياطي</h3>
+        <div class="btn-group" style="margin-top:10px;">
+            <button class="btn-primary" onclick="app.exportBackup()">تصدير نسخة JSON</button>
+            <button class="btn-warning" onclick="document.getElementById('import-file').click()">استرجاع نسخة</button>
+        </div>
+        <input type="file" id="import-file" accept=".json" style="display:none;" onchange="app.importBackup(this)">
+        
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-top:15px;">
+            ⚠️ استرجاع نسخة سيستبدل جميع البيانات الحالية
+        </p>
+    </section>
+</main>
+
+<nav class="bottom-nav">
+    <div class="nav-item active" onclick="app.nav('dashboard')" id="nav-home">
+        <span class="nav-icon">🏠</span><span>الرئيسية</span>
+    </div>
+    <div class="nav-item" onclick="app.nav('transactions')" id="nav-wallet">
+        <span class="nav-icon">💼</span><span>الصندوق</span>
+    </div>
+    <div class="nav-item" onclick="app.nav('settlement')" id="nav-settlement">
+        <span class="nav-icon">💳</span><span>تسديد الذمم</span>
+    </div>
+    <div class="nav-item" onclick="app.nav('reports')" id="nav-reports">
+        <span class="nav-icon">📄</span><span>التقارير</span>
+    </div>
+    <div class="nav-item" onclick="app.nav('settings')" id="nav-settings">
+        <span class="nav-icon">⚙️</span><span>إعدادات</span>
+    </div>
+</nav>
+
+<div id="toast">تمت العملية بنجاح</div>
+
+<script>
+const app = {
+    data: null,
+    currentEntity: null,
+    currentType: null,
+    editingId: null,
+    globalView: 'SYP',
+    settlementType: null,
+    
+    init() {
+        const saved = localStorage.getItem('storeData_v11');
+        this.data = saved ? JSON.parse(saved) : {
+            settings: { exchangeRate: 14000 },
+            customers: [{id: 1, name: '💵 صندوق نقدي'}],
+            suppliers: [],
+            transactions: []
+        };
+        
+        document.getElementById('t-date').valueAsDate = new Date();
+        document.getElementById('settle-date').valueAsDate = new Date();
+        this.renderDashboard();
+        document.getElementById('toast').className = '';
+    },
+    
+    save() {
+        localStorage.setItem('storeData_v11', JSON.stringify(this.data));
+        this.renderDashboard();
+    },
+    
+    toast(msg, type = 'success') {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = 'show' + (type === 'error' ? ' error' : '');
+        setTimeout(() => t.className = '', 3000);
+    },
+    
+    nav(section) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        
+        if(section === 'dashboard') {
+            document.getElementById('dashboard').classList.add('active');
+            document.getElementById('nav-home').classList.add('active');
+            this.renderDashboard();
+        }
+        else if(section === 'settlement') {
+            document.getElementById('settlement').classList.add('active');
+            document.getElementById('nav-settlement').classList.add('active');
+            this.initSettlement();
+        }
+        else if(section === 'customers' || section === 'suppliers') {
+            document.getElementById('entities').classList.add('active');
+            document.getElementById('nav-wallet').classList.add('active');
+            this.currentType = section === 'customers' ? 'customer' : 'supplier';
+            document.getElementById('entity-title').textContent = section === 'customers' ? '👥 العملاء' : '🏭 الموردين';
+            this.renderEntities();
+        }
+        else if(section === 'transactions') {
+            this.viewAccount(1, 'cash', '💵 سجل الصندوق');
+        }
+        else if(section === 'sales') {
+            this.openTransForm('in', 'customers', '🛒 فاتورة مبيعات');
+        }
+        else if(section === 'purchases') {
+            this.openTransForm('out', 'suppliers', '🛍️ فاتورة مشتريات');
+        }
+        else if(section === 'expenses') {
+            this.openTransForm('out', 'cash', '📉 مصروفات');
+        }
+        else if(section === 'reports') {
+            document.getElementById('reports').classList.add('active');
+            document.getElementById('nav-reports').classList.add('active');
+        }
+        else if(section === 'settings') {
+            document.getElementById('settings').classList.add('active');
+            document.getElementById('nav-settings').classList.add('active');
+            document.getElementById('ex-rate').value = this.data.settings.exchangeRate || 14000;
+        }
+        else {
+            document.getElementById(section).classList.add('active');
+        }
+    },
+    
+    toggleGlobalView() {
+        this.globalView = this.globalView === 'SYP' ? 'USD' : 'SYP';
+        document.getElementById('global-view-label').textContent = this.globalView;
+        this.renderDashboard();
+    },
+    
+    // ✅ FIXED: حساب الرصيد - منطق واضح وصحيح لكل العملات
+    calcBalance(trans, currency, entityType = 'customer') {
+        return trans
+            .filter(t => t.currency === currency)
+            .reduce((sum, t) => {
+                const amount = parseFloat(t.amount) || 0;
+                const isSettlement = (t.isSettlement === true);
+                
+                if(entityType === 'customer') {
+                    // العملاء: موجب = عليهم دين
+                    if(isSettlement) {
+                        // التسديد ينقص الدين
+                        // type 'in' = عميل يدفع = ينقص دينه
+                        return t.type === 'in' ? sum - amount : sum + amount;
+                    } else {
+                        // العادي: type 'in' = مبيعات = يزيد دينه
+                        return t.type === 'in' ? sum + amount : sum - amount;
+                    }
+                } else {
+                    // الموردين: سالب = لنا عليهم دين
+                    if(isSettlement) {
+                        // التسديد ينقص الدين (يقرب من الصفر)
+                        // type 'out' = نحن ندفع = ينقص ديننا لهم
+                        return t.type === 'out' ? sum + amount : sum - amount;
+                    } else {
+                        // العادي: type 'out' = مشتريات = يزيد ديننا لهم
+                        return t.type === 'out' ? sum - amount : sum + amount;
+                    }
+                }
+            }, 0);
+    },
+    
+    fmt(amount, currency) {
+        if(currency === 'SYP') {
+            return new Intl.NumberFormat('ar-SY').format(amount) + ' ل.س';
+        }
+        return '$ ' + parseFloat(amount).toFixed(2);
+    },
+    
+    initSettlement() {
+        document.getElementById('settle-party').innerHTML = '<option value="">-- اختر العميل/المورد --</option>';
+        document.getElementById('settlement-balances').style.display = 'none';
+        document.getElementById('settlement-info').style.display = 'none';
+        document.getElementById('settle-currency').value = '';
+        document.getElementById('settle-amount').value = '';
+        document.getElementById('settle-desc').value = '';
+        document.getElementById('settle-date').valueAsDate = new Date();
+        this.setSettlementType('customer');
+    },
+    
+    setSettlementType(type) {
+        this.settlementType = type;
+        document.getElementById('btn-settle-customer').style.display = 'block';
+        document.getElementById('btn-settle-supplier').style.display = 'block';
+        
+        const select = document.getElementById('settle-party');
+        select.innerHTML = '<option value="">-- اختر ' + (type === 'customer' ? 'العميل' : 'المورد') + ' --</option>';
+        
+        const entities = type === 'customer' ? this.data.customers : this.data.suppliers;
+        entities.forEach(e => {
+            if(e.id === 1 && type === 'customer') return;
+            select.innerHTML += `<option value="${e.id}">${e.name}</option>`;
+        });
+        
+        document.getElementById('settlement-balances').style.display = 'none';
+        document.getElementById('settlement-info').style.display = 'none';
+    },
+    
+    showSettlementBalances() {
+        const partyId = parseInt(document.getElementById('settle-party').value);
+        if(!partyId) {
+            document.getElementById('settlement-balances').style.display = 'none';
+            document.getElementById('settlement-info').style.display = 'none';
+            return;
+        }
+        
+        const trans = this.data.transactions.filter(t => t.partyId === partyId);
+        const entityType = this.settlementType === 'customer' ? 'customer' : 'supplier';
+        const balanceSYP = this.calcBalance(trans, 'SYP', entityType);
+        const balanceUSD = this.calcBalance(trans, 'USD', entityType);
+        
+        // للعملاء: الرصيد الموجب = عليهم دين
+        // للموردين: الرصيد السالب = لنا عليهم دين
+        const isCustomer = this.settlementType === 'customer';
+        const owesSYP = isCustomer ? balanceSYP : -balanceSYP;
+        const owesUSD = isCustomer ? balanceUSD : -balanceUSD;
+        
+        document.getElementById('balance-syp-debt').textContent = this.fmt(owesSYP, 'SYP');
+        document.getElementById('balance-usd-debt').textContent = this.fmt(owesUSD, 'USD');
+        
+        document.getElementById('balance-syp-debt').className = 'amount ' + (owesSYP > 0 ? 'positive' : 'negative');
+        document.getElementById('balance-usd-debt').className = 'amount ' + (owesUSD > 0 ? 'positive' : 'negative');
+        
+        document.getElementById('settlement-balances').style.display = 'block';
+        document.getElementById('settlement-info').style.display = 'block';
+        
+        const currSelect = document.getElementById('settle-currency');
+        currSelect.innerHTML = '<option value="">-- اختر العملة --</option>';
+        
+        if(owesSYP > 0) {
+            currSelect.innerHTML += '<option value="SYP">🇸🇾 ليرة سورية (SYP) - المتبقي: ' + this.fmt(owesSYP, 'SYP') + '</option>';
+        }
+        if(owesUSD > 0) {
+            currSelect.innerHTML += '<option value="USD">🇺🇸 دولار أمريكي (USD) - المتبقي: ' + this.fmt(owesUSD, 'USD') + '</option>';
+        }
+        
+        if(owesSYP <= 0 && owesUSD <= 0) {
+            currSelect.innerHTML += '<option value="SYP" disabled>🇸🇾 لا يوجد دين بالليرة</option>';
+            currSelect.innerHTML += '<option value="USD" disabled>🇺🇸 لا يوجد دين بالدولار</option>';
+        }
+        
+        this.updateSettlementForm();
+    },
+    
+    updateSettlementForm() {
+        const currency = document.getElementById('settle-currency').value;
+        const partyId = parseInt(document.getElementById('settle-party').value);
+        
+        if(!currency || !partyId) {
+            document.getElementById('max-settle-amount').textContent = '';
+            return;
+        }
+        
+        const trans = this.data.transactions.filter(t => t.partyId === partyId);
+        const entityType = this.settlementType === 'customer' ? 'customer' : 'supplier';
+        const balance = this.calcBalance(trans, currency, entityType);
+        const isCustomer = this.settlementType === 'customer';
+        const maxAmount = isCustomer ? balance : -balance;
+        
+        document.getElementById('max-settle-amount').textContent = 
+            'الحد الأقصى للتسديد: ' + this.fmt(maxAmount, currency);
+        document.getElementById('settle-amount').max = maxAmount;
+    },
+    
+    // ✅ FIXED: تسديد الذمم - يعمل لكل العملات
+    saveSettlement() {
+        const partyId = parseInt(document.getElementById('settle-party').value);
+        const amount = parseFloat(document.getElementById('settle-amount').value);
+        const currency = document.getElementById('settle-currency').value;
+        const desc = document.getElementById('settle-desc').value.trim();
+        const date = document.getElementById('settle-date').value;
+        const isCustomer = this.settlementType === 'customer';
+        
+        if(!partyId) return this.toast('⚠️ اختر العميل/المورد أولاً', 'error');
+        if(!currency) return this.toast('⚠️ اختر عملة التسديد', 'error');
+        if(!amount || amount <= 0) return this.toast('⚠️ أدخل مبلغاً صحيحاً', 'error');
+        if(!date) return this.toast('⚠️ اختر تاريخاً', 'error');
+        
+        const trans = this.data.transactions.filter(t => t.partyId === partyId);
+        const entityType = isCustomer ? 'customer' : 'supplier';
+        const balance = this.calcBalance(trans, currency, entityType);
+        const maxAmount = isCustomer ? balance : -balance;
+        
+        if(amount > maxAmount) {
+            return this.toast('⚠️ مبلغ التسديد يتجاوز الدين المستحق (' + this.fmt(maxAmount, currency) + ')', 'error');
+        }
+        
+        let partyName = '';
+        const entities = isCustomer ? this.data.customers : this.data.suppliers;
+        const party = entities.find(p => p.id === partyId);
+        if(party) partyName = party.name;
+        
+        const settlementId = Date.now();
+        
+        // ✅ العملية 1: لحساب العميل/المورد (تنقص الدين)
+        this.data.transactions.push({
+            id: settlementId,
+            type: isCustomer ? 'in' : 'out',
+            partyId: partyId,
+            partyName: partyName,
+            amount: amount,
+            currency: currency,
+            desc: desc || 'تسديد ذمم',
+            date: date,
+            isSettlement: true,
+            linkedTransactionId: settlementId + 1
+        });
+        
+        // ✅ العملية 2: للصندوق
+        const cashType = isCustomer ? 'in' : 'out';
+        const cashDesc = isCustomer ? 
+            (desc || 'تسديد من ' + partyName) : 
+            (desc || 'تسديد لـ ' + partyName);
+        
+        this.data.transactions.push({
+            id: settlementId + 1,
+            type: cashType,
+            partyId: 1,
+            partyName: '💵 صندوق نقدي',
+            amount: amount,
+            currency: currency,
+            desc: cashDesc,
+            date: date,
+            isSettlement: false,
+            linkedTransactionId: settlementId,
+            settlementPartyName: partyName
+        });
+        
+        this.save();
+        this.toast('✅ تم تسجيل التسديد بنجاح\nتم خصم المبلغ من الحساب وتحديث الصندوق');
+        
+        document.getElementById('settle-amount').value = '';
+        document.getElementById('settle-desc').value = '';
+        document.getElementById('settlement-balances').style.display = 'none';
+        document.getElementById('settlement-info').style.display = 'none';
+        document.getElementById('settle-party').value = '';
+        document.getElementById('settle-currency').value = '';
+        
+        setTimeout(() => {
+            this.initSettlement();
+        }, 500);
+    },
+    
+    renderDashboard() {
+        const cash = this.data.transactions.filter(t => t.partyId === 1);
+        const bSYP = this.calcBalance(cash, 'SYP', 'customer');
+        const bUSD = this.calcBalance(cash, 'USD', 'customer');
+        
+        document.getElementById('balance-syp').textContent = new Intl.NumberFormat('ar-SY').format(bSYP);
+        document.getElementById('balance-usd').textContent = bUSD.toFixed(2);
+        
+        const recent = [...this.data.transactions].reverse().slice(0, 5);
+        const list = document.getElementById('recent-list');
+        list.innerHTML = recent.length ? '' : '<div class="empty-state"><span class="icon">📭</span>لا توجد عمليات بعد</div>';
+        
+        recent.forEach(t => {
+            const party = [...this.data.customers, ...this.data.suppliers].find(p => p.id === t.partyId) || {name: 'نقدي'};
+            const cls = t.type === 'in' ? 'positive' : 'negative';
+            const sign = t.type === 'in' ? '+' : '−';
+            const badge = t.currency === 'SYP' ? '🇸🇾' : '🇺🇸';
+            const settlementBadge = t.isSettlement ? '<span class="transaction-type-badge settlement">تسديد</span>' : '<span class="transaction-type-badge normal">عادي</span>';
+            const cashBadge = t.partyId === 1 && t.settlementPartyName ? '<span class="transaction-type-badge settlement">صندوق</span>' : '';
+            
+            const div = document.createElement('div');
+            div.className = 'data-item';
+            div.innerHTML = `
+                <div class="data-info">
+                    <h4>${party.name} ${settlementBadge}${cashBadge}</h4>
+                    <p>${t.desc || 'بدون وصف'} • ${t.date} <span class="currency-badge ${t.currency}">${badge} ${t.currency}</span></p>
+                </div>
+                <div class="amount ${cls}" style="direction:ltr;font-weight:600;">
+                    ${sign}${this.fmt(parseFloat(t.amount), t.currency)}
+                </div>
+            `;
+            list.appendChild(div);
+        });
+    },
+    
+    renderEntities() {
+        const list = document.getElementById('entities-list');
+        const entities = this.currentType === 'customer' ? this.data.customers : this.data.suppliers;
+        
+        list.innerHTML = '';
+        entities.forEach(e => {
+            if(e.id === 1 && this.currentType === 'customer') return;
+            
+            const trans = this.data.transactions.filter(t => t.partyId === e.id);
+            const entityType = this.currentType;
+            const bSYP = this.calcBalance(trans, 'SYP', entityType);
+            const bUSD = this.calcBalance(trans, 'USD', entityType);
+            
+            const div = document.createElement('div');
+            div.className = 'data-item';
+            div.innerHTML = `
+                <div class="data-info" style="cursor:pointer;flex:1;" onclick="app.viewAccount(${e.id}, '${this.currentType}', '${e.name.replace(/'/g, "\\'")}')">
+                    <h4>${e.name}</h4>
+                    <p>
+                        <span style="color:var(--success)">SYP: ${this.fmt(bSYP, 'SYP')}</span> • 
+                        <span style="color:var(--accent)">USD: ${this.fmt(bUSD, 'USD')}</span>
+                    </p>
+                </div>
+                <button class="btn-danger btn-small" onclick="app.delEntity(${e.id})">🗑️</button>
+            `;
+            list.appendChild(div);
+        });
+        
+        if(list.children.length === 0) {
+            list.innerHTML = '<div class="empty-state"><span class="icon">👥</span>لا توجد سجلات</div>';
+        }
+    },
+    
+    addEntity() {
+        const name = document.getElementById('entity-name').value.trim();
+        if(!name) return this.toast('⚠️ أدخل الاسم أولاً', 'error');
+        
+        const id = Date.now();
+        const entity = {id, name};
+        
+        if(this.currentType === 'customer') {
+            this.data.customers.push(entity);
+        } else {
+            this.data.suppliers.push(entity);
+        }
+        
+        this.save();
+        document.getElementById('entity-name').value = '';
+        this.renderEntities();
+        this.toast('✅ تمت الإضافة');
+    },
+    
+    delEntity(id) {
+        if(!confirm('⚠️ حذف هذا السجل سيحذف جميع عملياته المرتبطة!\nهل أنت متأكد؟')) return;
+        
+        if(this.currentType === 'customer') {
+            this.data.customers = this.data.customers.filter(c => c.id !== id);
+        } else {
+            this.data.suppliers = this.data.suppliers.filter(s => s.id !== id);
+        }
+        this.data.transactions = this.data.transactions.filter(t => t.partyId !== id);
+        
+        this.save();
+        this.renderEntities();
+        this.toast('✅ تم الحذف');
+    },
+    
+    openTransForm(type, partyType, title, editData = null) {
+        document.getElementById('form-title').textContent = title;
+        document.getElementById('trans-form').classList.add('active');
+        
+        this.editingId = editData ? editData.id : null;
+        this.setTransType(editData ? editData.type : type);
+        
+        const select = document.getElementById('t-party');
+        select.innerHTML = '<option value="1">💵 نقدي (الصندوق)</option>';
+        
+        if(partyType === 'customers') {
+            this.data.customers.filter(c => c.id !== 1).forEach(c => {
+                select.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+            });
+        } else if(partyType === 'suppliers') {
+            this.data.suppliers.forEach(s => {
+                select.innerHTML += `<option value="${s.id}">${s.name}</option>`;
+            });
+        }
+        
+        if(editData) {
+            select.value = editData.partyId;
+            document.getElementById('t-amount').value = editData.amount;
+            document.getElementById('t-currency').value = editData.currency;
+            document.getElementById('t-desc').value = editData.desc;
+            document.getElementById('t-date').value = editData.date;
+        } else {
+            document.getElementById('t-date').valueAsDate = new Date();
+            document.getElementById('t-amount').value = '';
+            document.getElementById('t-desc').value = '';
+        }
+    },
+    
+    setTransType(type) {
+        document.getElementById('btn-in').style.display = type === 'in' ? 'block' : 'none';
+        document.getElementById('btn-out').style.display = type === 'out' ? 'block' : 'none';
+        document.getElementById('btn-in').dataset.type = type;
+        document.getElementById('btn-out').dataset.type = type;
+    },
+    
+    cancelTrans() {
+        this.editingId = null;
+        if(this.currentEntity) {
+            this.renderAccount();
+        } else {
+            this.nav('dashboard');
+        }
+    },
+    
+    saveTrans() {
+        const partyId = parseInt(document.getElementById('t-party').value);
+        const amount = parseFloat(document.getElementById('t-amount').value);
+        const currency = document.getElementById('t-currency').value;
+        const desc = document.getElementById('t-desc').value.trim();
+        const date = document.getElementById('t-date').value;
+        const type = document.getElementById('btn-in').style.display !== 'none' ? 'in' : 'out';
+        
+        if(!amount || amount <= 0) return this.toast('⚠️ أدخل مبلغاً صحيحاً', 'error');
+        if(!date) return this.toast('⚠️ اختر تاريخاً', 'error');
+        
+        let partyName = 'نقدي';
+        const all = [...this.data.customers, ...this.data.suppliers];
+        const party = all.find(p => p.id === partyId);
+        if(party) partyName = party.name;
+        
+        if(this.editingId) {
+            const idx = this.data.transactions.findIndex(t => t.id === this.editingId);
+            if(idx !== -1) {
+                this.data.transactions[idx] = {
+                    ...this.data.transactions[idx],
+                    type, partyId, partyName, amount, currency, desc, date
+                };
+                this.toast('✅ تم تعديل العملية');
+            }
+        } else {
+            this.data.transactions.push({
+                id: Date.now(), type, partyId, partyName, amount, currency, desc, date, isSettlement: false
+            });
+            this.toast('✅ تم الحفظ');
+        }
+        
+        this.save();
+        this.editingId = null;
+        document.getElementById('t-amount').value = '';
+        document.getElementById('t-desc').value = '';
+        
+        if(this.currentEntity) {
+            this.renderAccount();
+        } else {
+            this.nav('dashboard');
+        }
+    },
+    
+    editTrans: function(id) {
+        const t = app.data.transactions.find(x => x.id === id);
+        if(!t || t.isSettlement) return app.toast('⚠️ لا يمكن تعديل عمليات التسديد', 'error');
+        
+        let pType = 'cash';
+        if(app.data.customers.some(c => c.id === t.partyId)) pType = 'customers';
+        else if(app.data.suppliers.some(s => s.id === t.partyId)) pType = 'suppliers';
+        
+        let title = '✏️ تعديل عملية';
+        if(pType === 'customers') title = '✏️ تعديل مبيعات';
+        else if(pType === 'suppliers') title = '✏️ تعديل مشتريات';
+        
+        app.openTransForm(t.type, pType, title, t);
+    },
+    
+    delTrans: function(id) {
+        if(!confirm('⚠️ حذف هذه العملية نهائي؟\nلا يمكن التراجع.')) return;
+        
+        const t = app.data.transactions.find(x => x.id === id);
+        if(t && t.isSettlement) {
+            return app.toast('⚠️ لا يمكن حذف عمليات التسديد فردياً', 'error');
+        }
+        
+        const idx = app.data.transactions.findIndex(t => t.id === id);
+        if(idx !== -1) {
+            app.data.transactions.splice(idx, 1);
+            app.save();
+            app.toast('🗑️ تم الحذف');
+            if(app.currentEntity) app.renderAccount();
+        }
+    },
+    
+    viewAccount(id, type, name) {
+        this.currentEntity = id;
+        this.currentType = type;
+        
+        document.getElementById('acc-title').textContent = `📋 ${name}`;
+        document.getElementById('print-entity').textContent = name;
+        document.getElementById('print-date').textContent = new Date().toLocaleDateString('ar-SY');
+        
+        document.getElementById('acc-currency').value = 'SYP';
+        document.getElementById('date-from').value = '';
+        document.getElementById('date-to').value = '';
+        
+        this.renderAccount();
+        document.getElementById('account').classList.add('active');
+    },
+    
+    renderAccount() {
+        const currency = document.getElementById('acc-currency').value;
+        const from = document.getElementById('date-from').value;
+        const to = document.getElementById('date-to').value;
+        
+        let trans = this.data.transactions.filter(t => 
+            t.partyId === this.currentEntity && 
+            t.currency === currency
+        );
+        
+        if(from) trans = trans.filter(t => t.date >= from);
+        if(to) trans = trans.filter(t => t.date <= to);
+        
+        trans.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        const entityType = this.currentType === 'cash' ? 'customer' : this.currentType;
+        const balance = this.calcBalance(trans, currency, entityType);
+        
+        document.getElementById('bal-curr-label').textContent = currency;
+        document.getElementById('bal-curr-symbol').textContent = currency === 'SYP' ? 'ل.س' : '$';
+        document.getElementById('acc-balance').textContent = 
+            currency === 'SYP' ? new Intl.NumberFormat('ar-SY').format(balance) : balance.toFixed(2);
+        
+        document.getElementById('print-curr').textContent = currency === 'SYP' ? '🇸🇾 الليرة السورية' : '🇺🇸 الدولار الأمريكي';
+        document.getElementById('print-period').textContent = 
+            (from || to) ? `من ${from || 'البداية'} إلى ${to || 'النهاية'}` : 'كل الفترات';
+        document.getElementById('print-balance').textContent = this.fmt(balance, currency);
+        
+        const list = document.getElementById('acc-list');
+        list.innerHTML = '';
+        
+        if(trans.length === 0) {
+            list.innerHTML = `<div class="empty-state">
+                <span class="icon">📭</span>
+                لا توجد عمليات <strong>${currency === 'SYP' ? 'بالليرة السورية' : 'بالدولار'}</strong>
+                ${from || to ? 'للفترة المحددة' : 'حتى الآن'}
+            </div>`;
+            return;
+        }
+        
+        trans.forEach(t => {
+            const cls = t.type === 'in' ? 'positive' : 'negative';
+            const sign = t.type === 'in' ? '+' : '−';
+            const typeLabel = t.type === 'in' ? '✅ إيداع' : '❌ سحب';
+            const settlementBadge = t.isSettlement ? '<span class="transaction-type-badge settlement">تسديد</span>' : '';
+            
+            const div = document.createElement('div');
+            div.className = 'data-item';
+            div.innerHTML = `
+                <div class="data-info" style="flex:1;min-width:200px;">
+                    <h4>${t.desc || 'بدون وصف'} ${settlementBadge}</h4>
+                    <p>${t.date} • ${typeLabel}</p>
+                </div>
+                <div style="text-align:left;min-width:170px;">
+                    <div class="amount ${cls}" style="font-weight:600;direction:ltr;text-align:right;font-size:1.05rem;">
+                        ${sign}${this.fmt(parseFloat(t.amount), t.currency)}
+                    </div>
+                </div>
+            `;
+            list.appendChild(div);
+        });
+    },
+    
+    printStatement() {
+        document.getElementById('print-title').textContent = document.getElementById('acc-title').textContent;
+        setTimeout(() => {
+            window.print();
+        }, 300);
+    },
+    
+    exportText() {
+        const currency = document.getElementById('acc-currency').value;
+        const entityName = document.getElementById('acc-title').textContent.replace('📋 ', '');
+        const balance = document.getElementById('acc-balance').textContent;
+        
+        let text = 'كشف حساب\n';
+        text += '═══════════════════════════════════\n\n';
+        text += `العميل/المورد: ${entityName}\n`;
+        text += `العملة: ${currency === 'SYP' ? 'الليرة السورية' : 'الدولار الأمريكي'}\n`;
+        text += `تاريخ الإصدار: ${new Date().toLocaleDateString('ar-SY')}\n`;
+        text += `الرصيد النهائي: ${balance}\n\n`;
+        text += '═══════════════════════════════════\n\n';
+        text += 'التاريخ | البيان | النوع | المبلغ\n';
+        text += '───────────────────────────────────\n';
+        
+        const items = document.querySelectorAll('#acc-list .data-item');
+        items.forEach(item => {
+            const desc = item.querySelector('.data-info h4')?.textContent || '';
+            const info = item.querySelector('.data-info p')?.textContent || '';
+            const [date, type] = info.split('•').map(s => s.trim());
+            const amount = item.querySelector('.amount')?.textContent || '';
+            text += `${date} | ${desc} | ${type} | ${amount}\n`;
+        });
+        
+        const blob = new Blob([text], {type: 'text/plain;charset=utf-8'});
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `كشف_${entityName}_${currency}_${new Date().toISOString().slice(0,10)}.txt`;
+        link.click();
+        this.toast('✅ تم حفظ الكشف كنص');
+    },
+    
+    exportCSV() {
+        const currency = document.getElementById('acc-currency').value;
+        const entityName = document.getElementById('acc-title').textContent.replace('📋 ', '');
+        
+        let csv = '\uFEFF';
+        csv += 'التاريخ,البيان,النوع,المبلغ\n';
+        
+        const items = document.querySelectorAll('#acc-list .data-item');
+        items.forEach(item => {
+            const desc = (item.querySelector('.data-info h4')?.textContent || '').replace(/,/g, ';');
+            const info = item.querySelector('.data-info p')?.textContent || '';
+            const [date, type] = info.split('•').map(s => s.trim());
+            const amount = item.querySelector('.amount')?.textContent || '';
+            csv += `${date},"${desc}",${type},${amount}\n`;
+        });
+        
+        const balance = document.getElementById('acc-balance').textContent;
+        csv += `\nالرصيد النهائي,,,"${balance}"\n`;
+        
+        const blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `كشف_${entityName}_${currency}_${new Date().toISOString().slice(0,10)}.csv`;
+        link.click();
+        this.toast('✅ تم تصدير CSV');
+    },
+    
+    report(type) {
+        const out = document.getElementById('report-out');
+        
+        if(type === 'balances') {
+            let r = '📊 تقرير الأرصدة المنفصلة حسب العملة\n';
+            r += '═'.repeat(40) + '\n\n';
+            
+            const cash = this.data.transactions.filter(t => t.partyId === 1);
+            r += `🏦 الصندوق:\n`;
+            r += `   🇸🇾 SYP: ${this.fmt(this.calcBalance(cash, 'SYP', 'customer'), 'SYP')}\n`;
+            r += `   🇺🇸 USD: ${this.fmt(this.calcBalance(cash, 'USD', 'customer'), 'USD')}\n\n`;
+            
+            r += `👥 العملاء:\n`;
+            this.data.customers.filter(c => c.id !== 1).forEach(c => {
+                const t = this.data.transactions.filter(x => x.partyId === c.id);
+                const s = this.calcBalance(t, 'SYP', 'customer');
+                const u = this.calcBalance(t, 'USD', 'customer');
+                if(s !== 0 || u !== 0) {
+                    r += `   • ${c.name}\n`;
+                    r += `     SYP: ${this.fmt(s, 'SYP')}\n`;
+                    r += `     USD: ${this.fmt(u, 'USD')}\n`;
+                }
+            });
+            
+            r += `\n🏭 الموردين:\n`;
+            this.data.suppliers.forEach(s => {
+                const t = this.data.transactions.filter(x => x.partyId === s.id);
+                const sy = this.calcBalance(t, 'SYP', 'supplier');
+                const us = this.calcBalance(t, 'USD', 'supplier');
+                if(sy !== 0 || us !== 0) {
+                    r += `   • ${s.name}\n`;
+                    r += `     SYP: ${this.fmt(sy, 'SYP')}\n`;
+                    r += `     USD: ${this.fmt(us, 'USD')}\n`;
+                }
+            });
+            
+            out.textContent = r;
+            
+        } else if(type === 'flow') {
+            const cash = this.data.transactions.filter(t => t.partyId === 1);
+            const inS = this.calcBalance(cash.filter(t => t.type === 'in'), 'SYP', 'customer');
+            const outS = Math.abs(this.calcBalance(cash.filter(t => t.type === 'out'), 'SYP', 'customer'));
+            const inU = this.calcBalance(cash.filter(t => t.type === 'in'), 'USD', 'customer');
+            const outU = Math.abs(this.calcBalance(cash.filter(t => t.type === 'out'), 'USD', 'customer'));
+            
+            let r = '📈 حركة الصندوق (منفصل حسب العملة)\n';
+            r += '═'.repeat(40) + '\n\n';
+            r += `🇸🇾 الليرة السورية:\n`;
+            r += `   دخل: ${this.fmt(inS, 'SYP')}\n`;
+            r += `   مصروف: ${this.fmt(outS, 'SYP')}\n`;
+            r += `   ▸ الصافي: ${this.fmt(inS - outS, 'SYP')}\n\n`;
+            r += `🇺🇸 الدولار الأمريكي:\n`;
+            r += `   دخل: ${this.fmt(inU, 'USD')}\n`;
+            r += `   مصروف: ${this.fmt(outU, 'USD')}\n`;
+            r += `   ▸ الصافي: ${this.fmt(inU - outU, 'USD')}\n`;
+            
+            out.textContent = r;
+            
+        } else if(type === 'debts') {
+            let r = '💳 تقرير الذمم المستحقة\n';
+            r += '═'.repeat(40) + '\n\n';
+            
+            r += `👥 ذمم العملاء (عليهم):\n`;
+            this.data.customers.filter(c => c.id !== 1).forEach(c => {
+                const t = this.data.transactions.filter(x => x.partyId === c.id);
+                const s = this.calcBalance(t, 'SYP', 'customer');
+                const u = this.calcBalance(t, 'USD', 'customer');
+                if(s > 0 || u > 0) {
+                    r += `   • ${c.name}\n`;
+                    if(s > 0) r += `     🇸🇾 SYP: ${this.fmt(s, 'SYP')}\n`;
+                    if(u > 0) r += `     🇺🇸 USD: ${this.fmt(u, 'USD')}\n`;
+                }
+            });
+            
+            r += `\n🏭 ذمم الموردين (لنا):\n`;
+            this.data.suppliers.forEach(s => {
+                const t = this.data.transactions.filter(x => x.partyId === s.id);
+                const sy = this.calcBalance(t, 'SYP', 'supplier');
+                const us = this.calcBalance(t, 'USD', 'supplier');
+                if(sy < 0 || us < 0) {
+                    r += `   • ${s.name}\n`;
+                    if(sy < 0) r += `     🇸🇾 SYP: ${this.fmt(Math.abs(sy), 'SYP')}\n`;
+                    if(us < 0) r += `     🇺🇸 USD: ${this.fmt(Math.abs(us), 'USD')}\n`;
+                }
+            });
+            
+            out.textContent = r;
+        }
+    },
+    
+    saveSettings() {
+        this.data.settings.exchangeRate = parseFloat(document.getElementById('ex-rate').value) || 14000;
+        this.save();
+        this.toast('✅ تم حفظ الإعدادات');
+    },
+    
+    exportBackup() {
+        const data = JSON.stringify(this.data, null, 2);
+        const blob = new Blob([data], {type: 'application/json'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `backup_${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+        this.toast('✅ بدأ تحميل النسخة');
+    },
+    
+    importBackup(input) {
+        const file = input.files[0];
+        if(!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const json = JSON.parse(e.target.result);
+                if(json.customers && json.transactions) {
+                    if(confirm('⚠️ سيتم استبدال جميع البيانات الحالية!\nمتابعة؟')) {
+                        this.data = json;
+                        this.save();
+                        this.toast('✅ تم استرجاع النسخة');
+                        setTimeout(() => location.reload(), 800);
+                    }
+                } else {
+                    this.toast('⚠️ ملف غير صالح', 'error');
+                }
+            } catch(err) {
+                this.toast('⚠️ خطأ في قراءة الملف', 'error');
+            }
+        };
+        reader.readAsText(file);
+        input.value = '';
+    }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    app.init();
+});
+</script>
+</body>
+</html>
