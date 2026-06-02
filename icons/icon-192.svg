@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- تدرج لوني للخلفية -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0d47a1"/>
+      <stop offset="50%" style="stop-color:#1565c0"/>
+      <stop offset="100%" style="stop-color:#1976d2"/>
+    </linearGradient>
+    
+    <!-- تدرج لوني للأيقونة -->
+    <linearGradient id="iconGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#4fc3f7"/>
+      <stop offset="100%" style="stop-color:#29b6f6"/>
+    </linearGradient>
+    
+    <!-- ظل ناعم -->
+    <filter id="softShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="8"/>
+      <feOffset dx="0" dy="4" result="offsetblur"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.3"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <!-- توهج داخلي -->
+    <radialGradient id="innerGlow" cx="50%" cy="30%" r="60%">
+      <stop offset="0%" style="stop-color:#ffffff; stop-opacity:0.15"/>
+      <stop offset="100%" style="stop-color:#ffffff; stop-opacity:0"/>
+    </radialGradient>
+  </defs>
+  
+  <!-- الخلفية المستديرة -->
+  <rect width="512" height="512" rx="112" ry="112" fill="url(#bgGradient)"/>
+  
+  <!-- توهج داخلي -->
+  <rect width="512" height="512" rx="112" ry="112" fill="url(#innerGlow)"/>
+  
+  <!-- إطار خارجي خفيف -->
+  <rect x="8" y="8" width="496" height="496" rx="104" ry="104" 
+        fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="2"/>
+  
+  <!-- أيقونة المحفظة (Wallet) -->
+  <g transform="translate(256, 210)" filter="url(#softShadow)">
+    <!-- جسم المحفظة -->
+    <rect x="-95" y="-60" width="190" height="130" rx="18" 
+          fill="url(#iconGradient)" stroke="#0277bd" stroke-width="3"/>
+    
+    <!-- غطاء المحفظة -->
+    <path d="M -95 -60 Q -95 -80 -75 -80 L 75 -80 Q 95 -80 95 -60 L 95 -40 L -95 -40 Z" 
+          fill="#0288d1" stroke="#01579b" stroke-width="2"/>
+    
+    <!-- جيب النقود -->
+    <circle cx="50" cy="5" r="22" fill="#ffffff" opacity="0.95"/>
+    <circle cx="50" cy="5" r="16" fill="#0d47a1"/>
+    <text x="50" y="12" font-family="Arial, sans-serif" font-size="22" 
+          font-weight="bold" fill="#ffffff" text-anchor="middle">$</text>
+    
+    <!-- خط زخرفي -->
+    <line x1="-70" y1="-40" x2="70" y2="-40" 
+          stroke="#01579b" stroke-width="2" opacity="0.5"/>
+  </g>
+  
+  <!-- رمز الليرة السورية (يسار) والدولار (يمين) -->
+  <g transform="translate(140, 340)">
+    <circle r="32" fill="#ffffff" opacity="0.95"/>
+    <text y="10" font-family="Arial, sans-serif" font-size="30" 
+          font-weight="bold" fill="#0d47a1" text-anchor="middle">ل.س</text>
+  </g>
+  
+  <g transform="translate(372, 340)">
+    <circle r="32" fill="#ffffff" opacity="0.95"/>
+    <text y="12" font-family="Arial, sans-serif" font-size="36" 
+          font-weight="bold" fill="#0d47a1" text-anchor="middle">$</text>
+  </g>
+  
+  <!-- سهم التبادل بين العملتين -->
+  <g transform="translate(256, 340)" stroke="#ffffff" stroke-width="3" 
+     fill="none" opacity="0.8">
+    <path d="M -40 0 L 40 0 M 30 -8 L 40 0 L 30 8"/>
+    <path d="M 40 15 L -40 15 M -30 7 L -40 15 L -30 23"/>
+  </g>
+  
+  <!-- نص "المتجر" في الأسفل -->
+  <text x="256" y="445" font-family="'Tajawal', 'Arial', sans-serif" 
+        font-size="48" font-weight="bold" fill="#ffffff" 
+        text-anchor="middle" letter-spacing="2">المتجر</text>
+</svg>
