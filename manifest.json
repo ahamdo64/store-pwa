@@ -1,7 +1,7 @@
-﻿{
+{
   "name": "نظام إدارة حسابات المتجر",
   "short_name": "إدارة المتجر",
-  "description": "نظام متكامل لإدارة حسابات المتجر بالليرة السورية والدولار",
+  "description": "نظام متكامل لإدارة حسابات المتجر بالليرة السورية والدولار - آمن ويعمل دون إنترنت",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
@@ -38,5 +38,13 @@
       "url": "./index.html?section=settlement",
       "icons": [{ "src": "icons/icon-192.svg", "sizes": "192x192" }]
     }
-  ]
+  ],
+  "share_target": {
+    "action": "./index.html",
+    "method": "GET",
+    "params": {
+      "title": "name",
+      "text": "description"
+    }
+  }
 }
