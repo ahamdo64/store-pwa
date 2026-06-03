@@ -4,26 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <!-- PWA Meta Tags -->
+    <!-- PWA Meta Tags - Security & Performance -->
     <title>نظام إدارة حسابات المتجر</title>
-    <meta name="description" content="نظام متكامل لإدارة حسابات المتجر بالليرة السورية والدولار">
+    <meta name="description" content="نظام متكامل لإدارة حسابات المتجر بالليرة السورية والدولار - آمن ويعمل دون إنترنت">
     <meta name="theme-color" content="#0d47a1">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="msapplication-navbutton-color" content="#0d47a1">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="إدارة المتجر">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="application-name" content="إدارة المتجر">
     <meta name="msapplication-TileColor" content="#0d47a1">
     <meta name="msapplication-tap-highlight" content="no">
     
+    <!-- Security Headers Simulation -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://fonts.googleapis.com https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'">
+    
     <!-- PWA Manifest -->
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest.json" crossorigin="use-credentials">
     
     <!-- Icons -->
     <link rel="icon" type="image/svg+xml" href="icons/icon-192.svg">
     <link rel="apple-touch-icon" href="icons/icon-192.svg">
     <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.svg">
     <link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512.svg">
+    
+    <!-- Preconnect to external resources -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
     
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -32,6 +43,7 @@
             height: 100%;
             overflow: hidden;
             background-color: #121212;
+            font-family: 'Tajawal', Arial, sans-serif;
         }
         #app-frame {
             width: 100%;
@@ -40,6 +52,55 @@
             height: 100dvh;
             border: none;
             display: block;
+            background: #121212;
+        }
+        
+        /* Loading Screen */
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0d47a1, #1565c0);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            transition: opacity 0.5s ease;
+        }
+        #loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .loading-icon {
+            width: 120px;
+            height: 120px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+            animation: pulse 2s infinite;
+        }
+        .loading-icon span {
+            font-size: 64px;
+        }
+        .loading-text {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .loading-subtext {
+            color: rgba(255,255,255,0.8);
+            font-size: 0.9rem;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
         }
         
         /* Install prompt banner */
@@ -55,7 +116,6 @@
             border-radius: 12px;
             box-shadow: 0 8px 25px rgba(0,0,0,0.5);
             z-index: 9999;
-            font-family: 'Tajawal', Arial, sans-serif;
             max-width: 90%;
             animation: slideUp 0.3s ease-out;
         }
@@ -87,17 +147,120 @@
             color: white;
             padding: 8px 16px;
             border-radius: 20px;
-            font-family: 'Tajawal', Arial, sans-serif;
             font-size: 0.85rem;
             z-index: 9999;
             box-shadow: 0 2px 10px rgba(0,0,0,0.3);
         }
-        #offline-indicator.show { display: block; }
+        #offline-indicator.show { display: block; animation: shake 0.5s; }
+        @keyframes shake {
+            0%, 100% { transform: translateX(-50%); }
+            25% { transform: translateX(-45%); }
+            75% { transform: translateX(-55%); }
+        }
+        
+        /* Error screen */
+        #error-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #121212;
+            z-index: 9998;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        #error-screen.show { display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        #error-screen h2 { color: #f44336; margin-bottom: 20px; font-size: 1.8rem; }
+        #error-screen p { color: #b0bec5; margin: 10px 0; line-height: 1.6; }
+        #error-screen button {
+            margin-top: 30px;
+            padding: 12px 30px;
+            background: #0d47a1;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        
+        /* Developer Footer */
+        .dev-footer {
+            position: fixed;
+            bottom: 65px;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, #1a1a1a, #252525);
+            border-top: 2px solid #0d47a1;
+            padding: 10px 15px;
+            text-align: center;
+            z-index: 90;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.4);
+            backdrop-filter: blur(5px);
+        }
+        .dev-footer .dev-name {
+            color: #29b6f6;
+            font-weight: bold;
+            font-size: 0.95rem;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .dev-footer .dev-title {
+            color: #b0bec5;
+            font-size: 0.8rem;
+            display: block;
+            margin-bottom: 6px;
+        }
+        .dev-footer .contact-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            font-size: 0.8rem;
+        }
+        .dev-footer .contact-row a {
+            color: #fff;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s ease;
+            padding: 4px 8px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.05);
+        }
+        .dev-footer .contact-row a:hover {
+            background: rgba(41, 182, 246, 0.15);
+            color: #29b6f6;
+        }
+        .dev-footer .separator {
+            color: #555;
+            font-size: 0.7rem;
+        }
     </style>
 </head>
 <body>
-    <!-- Main app loaded in iframe (original code untouched) -->
-    <iframe id="app-frame" src="app.html" allow="storage-access"></iframe>
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="loading-icon">
+            <span>💰</span>
+        </div>
+        <div class="loading-text">جاري تحميل التطبيق...</div>
+        <div class="loading-subtext">يرجى الانتظار</div>
+    </div>
+    
+    <!-- Error Screen -->
+    <div id="error-screen">
+        <h2>⚠️ حدث خطأ</h2>
+        <p>تعذر تحميل التطبيق</p>
+        <p style="font-size: 0.9rem; color: #666;">تحقق من اتصالك بالإنترنت وحاول مرة أخرى</p>
+        <button onclick="location.reload()">🔄 إعادة المحاولة</button>
+    </div>
+    
+    <!-- Main app loaded in iframe -->
+    <iframe id="app-frame" src="app.html" allow="storage-access; clipboard-read; clipboard-write" title="تطبيق إدارة المتجر"></iframe>
     
     <!-- Install prompt banner -->
     <div id="install-banner">
@@ -107,28 +270,48 @@
     </div>
     
     <!-- Offline indicator -->
-    <div id="offline-indicator">📡 أنت غير متصل بالإنترنت</div>
+    <div id="offline-indicator">📡 وضع عدم الاتصال - التطبيق يعمل محلياً</div>
+    
+    <!-- Developer Footer -->
+    <footer class="dev-footer">
+        <span class="dev-name">⚡ تطوير: المهندس أحمد عمران</span>
+        <span class="dev-title">مهندس كهربائي | طرطوس - الحمراية</span>
+        <div class="contact-row">
+            <a href="tel:0998324188" title="اتصال">📞 0998324188</a>
+            <span class="separator">|</span>
+            <a href="https://wa.me/963998324188" target="_blank" title="واتساب">💬 واتساب</a>
+            <span class="separator">|</span>
+            <a href="mailto:ahamdo64@gmail.com" title="بريد">✉️ ahamdo64@gmail.com</a>
+        </div>
+    </footer>
     
     <script>
         // ============================================
-        // 1. Register Service Worker
+        // 1. Service Worker Registration with Error Handling
         // ============================================
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', async () => {
+        const SW_VERSION = 'v2.0';
+        let swRegistration = null;
+        
+        async function registerServiceWorker() {
+            if ('serviceWorker' in navigator) {
                 try {
                     const registration = await navigator.serviceWorker.register('./sw.js', {
-                        scope: './'
+                        scope: './',
+                        updateViaCache: 'none'
                     });
-                    console.log('✅ SW registered:', registration.scope);
+                    swRegistration = registration;
+                    console.log(`✅ Service Worker registered: ${SW_VERSION}`, registration.scope);
                     
-                    // Check for updates periodically
+                    // Check for updates every hour
                     setInterval(() => {
                         registration.update();
-                    }, 60 * 60 * 1000); // every hour
+                    }, 60 * 60 * 1000);
                     
                     // Handle updates
                     registration.addEventListener('updatefound', () => {
                         const newWorker = registration.installing;
+                        console.log('🔄 New Service Worker found');
+                        
                         newWorker.addEventListener('statechange', () => {
                             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                                 if (confirm('🔄 يتوفر تحديث جديد للتطبيق. هل تريد التحديث الآن؟')) {
@@ -138,14 +321,56 @@
                             }
                         });
                     });
+                    
+                    // Hide loading screen when SW is ready
+                    if (registration.active) {
+                        hideLoadingScreen();
+                    }
+                    
+                    registration.addEventListener('updatefound', () => {
+                        if (registration.installing) {
+                            registration.installing.addEventListener('statechange', () => {
+                                if (registration.installing.state === 'activated') {
+                                    hideLoadingScreen();
+                                }
+                            });
+                        }
+                    });
+                    
                 } catch (error) {
-                    console.error('❌ SW registration failed:', error);
+                    console.error('❌ Service Worker registration failed:', error);
+                    showErrorScreen('فشل تحميل الخدمة الأساسية');
                 }
-            });
+            } else {
+                console.warn('⚠️ Service Worker not supported');
+                hideLoadingScreen();
+            }
         }
         
         // ============================================
-        // 2. PWA Install Prompt
+        // 2. Loading Screen Management
+        // ============================================
+        function hideLoadingScreen() {
+            const loadingScreen = document.getElementById('loading-screen');
+            if (loadingScreen) {
+                setTimeout(() => {
+                    loadingScreen.classList.add('hidden');
+                }, 1000);
+            }
+        }
+        
+        function showErrorScreen(message) {
+            const errorScreen = document.getElementById('error-screen');
+            const loadingScreen = document.getElementById('loading-screen');
+            if (errorScreen && loadingScreen) {
+                loadingScreen.classList.add('hidden');
+                errorScreen.classList.add('show');
+                errorScreen.querySelector('p').textContent = message;
+            }
+        }
+        
+        // ============================================
+        // 3. PWA Install Prompt
         // ============================================
         let deferredPrompt = null;
         const installBanner = document.getElementById('install-banner');
@@ -155,12 +380,13 @@
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
+            console.log('💾 Install prompt available');
             
             // Don't show if user dismissed before
             if (!localStorage.getItem('pwa-install-dismissed')) {
                 setTimeout(() => {
                     installBanner.classList.add('show');
-                }, 3000);
+                }, 5000);
             }
         });
         
@@ -191,45 +417,75 @@
         });
         
         // ============================================
-        // 3. Online/Offline Detection
+        // 4. Online/Offline Detection
         // ============================================
         const offlineIndicator = document.getElementById('offline-indicator');
         
         function updateOnlineStatus() {
             if (!navigator.onLine) {
                 offlineIndicator.classList.add('show');
+                console.log('📡 Offline mode');
             } else {
                 offlineIndicator.classList.remove('show');
+                console.log('🌐 Online mode');
             }
         }
         
         window.addEventListener('online', updateOnlineStatus);
         window.addEventListener('offline', updateOnlineStatus);
-        updateOnlineStatus();
         
         // ============================================
-        // 4. Handle deep links (optional)
+        // 5. Security & Performance
         // ============================================
-        const urlParams = new URLSearchParams(window.location.search);
-        const section = urlParams.get('section');
-        if (section) {
-            const frame = document.getElementById('app-frame');
-            frame.addEventListener('load', () => {
-                try {
-                    frame.contentWindow.postMessage({ type: 'NAVIGATE', section: section }, '*');
-                } catch(e) {
-                    console.log('Deep link handling not available');
-                }
-            }, { once: true });
-        }
+        
+        // Prevent zoom on double tap (better UX)
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', (event) => {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+        
+        // Handle unhandled promise rejections
+        window.addEventListener('unhandledrejection', event => {
+            console.error('Unhandled rejection:', event.reason);
+        });
+        
+        // Handle errors
+        window.addEventListener('error', event => {
+            console.error('Global error:', event.error);
+        });
         
         // ============================================
-        // 5. Badges (if supported)
+        // 6. Initialize App
         // ============================================
-        if ('setAppBadge' in navigator) {
-            // You can set badge count for notifications
-            // navigator.setAppBadge(5);
-        }
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log(`🚀 App initialized - Version: ${SW_VERSION}`);
+            registerServiceWorker();
+            updateOnlineStatus();
+            
+            // Check if iframe loaded
+            const iframe = document.getElementById('app-frame');
+            iframe.addEventListener('load', () => {
+                console.log('✅ Iframe loaded successfully');
+            });
+            
+            iframe.addEventListener('error', () => {
+                console.error('❌ Iframe failed to load');
+                showErrorScreen('فشل تحميل التطبيق الداخلي');
+            });
+        });
+        
+        // ============================================
+        // 7. Cleanup on page unload
+        // ============================================
+        window.addEventListener('beforeunload', () => {
+            if (swRegistration) {
+                console.log('👋 Cleaning up...');
+            }
+        });
     </script>
 </body>
 </html>
